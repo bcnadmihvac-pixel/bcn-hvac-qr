@@ -1,3 +1,4 @@
+
 import React, { useEffect, useMemo, useState } from "react";
 import { QRCodeCanvas } from "qrcode.react";
 
@@ -6,13 +7,13 @@ import { QRCodeCanvas } from "qrcode.react";
  * - Admin PIN: 13579
  * - Edición por teclado (y +/-) con botón "Guardar cambios"
  * - Modo kiosco (solo lectura) cuando se entra con ?id=
- * - CAPEX con 38 equipos (nombres según lista provista); IDs capex-1..capex-38
+ * - CAPEX con 38 equipos (nombres actualizados)
  */
 
 // ===================== Constantes =====================
 const EMPRESAS = [
   { key: "capex", label: "capex" },
-  { key: "terrazas", label: "terrazas" }, // vacío por ahora
+  { key: "terrazas", label: "terrazas" },
 ];
 
 const LS_KEY = "qr-equipos-data-v1";
@@ -79,14 +80,13 @@ function makeCapex38() {
     { id: "capex-35", empresa: "capex", nombre: "TRANE 2250 R410", tipo: "split", estado: "OK", ultimoServicio: hoyISO(), split: {}, rooftop: null, notas: "" },
     { id: "capex-36", empresa: "capex", nombre: "TRANE 2250 R410", tipo: "split", estado: "OK", ultimoServicio: hoyISO(), split: {}, rooftop: null, notas: "" },
     { id: "capex-37", empresa: "capex", nombre: "TRANE 2250 R410", tipo: "split", estado: "OK", ultimoServicio: hoyISO(), split: {}, rooftop: null, notas: "" },
-    { id: "capex-38", empresa: "capex", nombre: "LG 4500 R410", tipo: "split", estado: "OK", ultimoServicio: hoyISO(), split: {}, rooftop: null, notas: "" }
+    { id: "capex-38", empresa: "capex", nombre: "LG 4500 R410", tipo: "split", estado: "OK", ultimoServicio: hoyISO(), split: {}, rooftop: null, notas: "" },
   ];
 }
 
 // ===================== Datos iniciales =====================
 const EXAMPLE_DATA = [
   ...makeCapex38(),
-  // Si luego querés terrazas, se agregan aquí
 ];
 
 // ===================== Persistencia =====================
@@ -124,17 +124,14 @@ export default function App() {
   const [showQR, setShowQR] = useState(false);
   const [openSec, setOpenSec] = useState<Record<string, boolean>>({ capex: true, terrazas: false });
 
-  // Kiosco si hay ?id=
   const queryId = useQueryId();
   const isKiosk = !!queryId;
 
-  // Preparar edición
   useEffect(() => {
     if (selected) setDraft(JSON.parse(JSON.stringify(selected)));
     else setDraft(null);
   }, [selected]);
 
-  // Si entro por ?id=, abrir ese equipo
   useEffect(() => {
     if (queryId && !selected) {
       const eq = items.find((e) => e.id === queryId);
@@ -161,7 +158,6 @@ export default function App() {
 
   const makeLink = (id: string) => window.location.origin + window.location.pathname + `?id=${id}`;
 
-  // Agrupar por empresa
   const porEmpresa = useMemo(() => {
     const map: Record<string, any[]> = { capex: [], terrazas: [] };
     for (const it of items) if (map[it.empresa]) map[it.empresa].push(it);
@@ -170,7 +166,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-neutral-50 text-neutral-900">
-      {/* Header (oculto en kiosco) */}
+
       {!isKiosk && (
         <header className="p-3 border-b border-neutral-200 flex items-center gap-2">
           <strong>BCN HVAC · Equipos</strong>
@@ -195,7 +191,6 @@ export default function App() {
         </header>
       )}
 
-      {/* Listado por empresa (acordeones) */}
       {!isKiosk && (
         <main className="max-w-3xl mx-auto p-4 grid gap-4">
           {EMPRESAS.map((emp) => {
@@ -246,10 +241,8 @@ export default function App() {
         </main>
       )}
 
-      {/* Ficha (deslizante) */}
       {selected && (
         <div className="fixed inset-0 bg-white overflow-y-auto">
-          {/* Barra superior */}
           <div className="p-4 border-b flex items-center gap-2">
             {!isKiosk && (
               <button onClick={() => setSelected(null)} className="h-9 w-9 rounded border">←</button>
@@ -270,15 +263,13 @@ export default function App() {
             )}
           </div>
 
-          {/* Contenido ficha */}
           <div className="p-4 grid gap-5">
-            {/* Generales */}
+
             <section className="grid gap-3">
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <Info label="Empresa" value={selected.empresa.toUpperCase()} />
                 <Info label="Tipo" value={selected.tipo} />
 
-                {/* Nombre editable */}
                 <div className="col-span-2">
                   <label className="block text-[11px] text-neutral-500">Nombre</label>
                   {!admin ? (
@@ -325,7 +316,6 @@ export default function App() {
               </div>
             </section>
 
-            {/* Split: Consumos + Presiones */}
             {selected.tipo === "split" && (
               <section className="grid gap-3">
                 <h3 className="text-base font-semibold">Consumos</h3>
@@ -374,7 +364,6 @@ export default function App() {
               </section>
             )}
 
-            {/* Notas */}
             <section className="grid gap-2">
               <label className="block text-[11px] text-neutral-500">Notas</label>
               {!admin ? (
@@ -386,4 +375,18 @@ export default function App() {
                   value={(draft || selected).notas || ""}
                   onChange={(e) => setDraft({ ...(draft || selected), id: selected.id, notas: e.target.value })}
                   className="w-full h-24 p-3 rounded border"
-        
+                />
+              )}
+            </section>
+
+            <div className="h-16" />
+
+            <div className="sticky bottom-0 p-3 bg-white/90 border-t">
+              <div className="flex items-center gap-2">
+                <button onClick={() => setShowQR((s) => !s)} className="h-11 px-4 rounded border flex-1">
+                  {showQR ? "Ocultar QR" : "Mostrar QR"}
+                </button>
+
+                {!isKiosk && admin && (
+                  <>
+     
