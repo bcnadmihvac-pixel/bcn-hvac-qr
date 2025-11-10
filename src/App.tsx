@@ -185,6 +185,8 @@ export default function App() {
   const porEmpresa = useMemo(() => {
     const map: Record<string, any[]> = { capex: [], terrazas: [] };
     for (const it of items) if (map[it.empresa]) map[it.empresa].push(it);
+    
+    
     return map;
   }, [items]);
 
@@ -312,14 +314,17 @@ export default function App() {
   }, [items, porEmpresa]);
 
   // ===================== Render =====================
+  // CSS variables (para evitar error TS2353 en style keys "--brand")
+  const styleVars = {
+    "--brand": brand.color || "#0ea5e9",
+    "--brand-faint": `${hexToRgba(brand.color || "#0ea5e9", 0.08)}`,
+  } as React.CSSProperties & Record<string, string>;
   return (
     <div
       className="min-h-screen bg-neutral-50 text-neutral-900 dark:bg-neutral-900 dark:text-neutral-50"
-      style={{
-        ["--brand"]: brand.color || "#0ea5e9",
-        ["--brand-faint"]: `${hexToRgba(brand.color || "#0ea5e9", 0.08)}`,
-      }}
+      style={styleVars}
     >
+      {/* Header */}
       <header
         className="sticky top-0 z-20 border-b border-neutral-200 dark:border-neutral-800 backdrop-blur supports-[backdrop-filter]:bg-white/75 dark:supports-[backdrop-filter]:bg-neutral-900/75"
         style={{ background: `linear-gradient(90deg, var(--brand-faint), transparent)` }}
@@ -366,6 +371,7 @@ export default function App() {
         </div>
       </header>
 
+      {/* Actions row (solo admin) */}
       {admin && (
         <div className="max-w-3xl mx-auto px-4 py-3 grid gap-2">
           <div className="flex gap-2">
@@ -427,6 +433,7 @@ export default function App() {
         </div>
       )}
 
+      {/* Empresas como acordeones */}
       <main className="max-w-3xl mx-auto px-4 pb-24">
         <ul className="grid gap-4">
           {EMPRESAS.map((emp) => {
@@ -448,6 +455,7 @@ export default function App() {
                     <span className="text-neutral-400">{abierto ? "▴" : "▾"}</span>
                   </div>
                 </button>
+                {/* Contenido desplegable */}
                 <div className={`${abierto ? "block" : "hidden"} border-t border-neutral-200 dark:border-neutral-800 bg-neutral-50/60 dark:bg-neutral-950`}>
                   <ul className="grid gap-3 p-3">
                     {lista.map((it, idx) => (
@@ -484,6 +492,7 @@ export default function App() {
         </ul>
       </main>
 
+      {/* Ficha: hoja deslizante */}
       {selected && (
         <div className="fixed inset-0 z-30">
           <div className="absolute inset-0 bg-black/40" onClick={() => setSelected(null)} />
@@ -504,6 +513,7 @@ export default function App() {
             </div>
 
             <div className="p-4 grid gap-5">
+              {/* Generales */}
               <section className="grid gap-3">
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <Info label="Empresa" value={selected.empresa.toUpperCase()} />
@@ -614,6 +624,7 @@ export default function App() {
                 </section>
               )}
 
+              {/* Notas */}
               <section className="grid gap-2">
                 <label className="block text-[11px] text-neutral-500">Notas</label>
                 {!admin ? (
@@ -629,6 +640,7 @@ export default function App() {
                 )}
               </section>
 
+              {/* Acciones inferior */}
               <div className="h-16" />
             </div>
 
@@ -663,6 +675,7 @@ export default function App() {
         </div>
       )}
 
+      {/* FAB admin hint en mobile */}
       {!admin && (
         <button
           onClick={() => {
