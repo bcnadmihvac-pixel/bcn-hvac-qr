@@ -8,7 +8,6 @@ const EMPRESAS = [
 
 const LS_KEY = "qr-equipos-data-v1";
 const LS_ADMIN = "qr-equipos-admin";
-const LS_BRAND = "qr-equipos-brand";
 
 function hoyISO() { const d = new Date(); return d.toISOString().slice(0,10); }
 function formatDate(iso?: string) {
@@ -114,10 +113,7 @@ export default function App() {
   }
   function logoutAdmin() { localStorage.removeItem(LS_ADMIN); setAdmin(false); }
 
-  const styleVars = {
-    "--brand": "#0ea5e9",
-    "--brand-faint": "rgba(14,165,233,0.08)",
-  } as React.CSSProperties & Record<string, string>;
+  const styleVars = { "--brand": "#0ea5e9", "--brand-faint": "rgba(14,165,233,0.08)" } as React.CSSProperties & Record<string, string>;
 
   return (
     <div className="min-h-screen bg-neutral-50 text-neutral-900" style={styleVars}>
@@ -225,6 +221,7 @@ export default function App() {
                             const next = prev.map(e => e.id === draft.id ? draft : e);
                             saveData(next); return next;
                           });
+                          setSelected(draft);
                         }}
                         className="h-11 px-4 rounded-xl text-white"
                         style={{ backgroundColor: "var(--brand)" }}
@@ -258,17 +255,6 @@ export default function App() {
             </div>
           </div>
         )
-      )}
-
-      {!admin && !isKiosk && (
-        <button
-          onClick={() => { const el = document.querySelector('input[type="password"]') as HTMLInputElement | null; if (el) el.focus(); }}
-          className="fixed bottom-6 right-6 z-10 h-12 w-12 rounded-full shadow-lg text-white grid place-items-center md:hidden"
-          style={{ backgroundColor: "var(--brand)" }}
-          title="Entrar admin"
-        >
-          ⚙️
-        </button>
       )}
     </div>
   );
@@ -319,7 +305,7 @@ function Ficha({ admin, draft, setDraft, onChange, isKiosk }:{ admin:boolean; dr
         </section>
       )}
 
-      {draft.tipo === "rooftop" and (
+      {draft.tipo === "rooftop" && (
         <section className="grid gap-3">
           <h3 className="text-base font-semibold">Parámetros Rooftop</h3>
           <div className="grid grid-cols-2 gap-3">
@@ -354,19 +340,68 @@ function Info({ label, value }: { label: string; value: string }) {
   );
 }
 
-function FieldNumber({ admin, label, value, onChange, step = 1, }: { admin: boolean; label: string; value: number; onChange: (v: number) => void; step?: number; }) {
+// FieldNumber that allows typing live + +/-
+function FieldNumber({
+  admin,
+  label,
+  value,
+  onChange,
+  step = 1,
+}: {
+  admin: boolean;
+  label: string;
+  value: number | null | undefined;
+  onChange: (v: number) => void;
+  step?: number;
+}) {
+  const [txt, setTxt] = React.useState<string>("");
+
+  React.useEffect(() => {
+    if (value === null || value === undefined) setTxt("");
+    else setTxt(String(value));
+  }, [value]);
+
+  const updateFromText = (s: string) => {
+    setTxt(s);
+    const normalized = s.replace(",", ".");
+    if (normalized === "" || normalized === "-" || normalized.endsWith(".")) return;
+    const n = Number(normalized);
+    if (!Number.isNaN(n)) onChange(n);
+  };
+
+  const bump = (delta: number) => {
+    const current = Number(String(txt).replace(",", "."));
+    const base = Number.isNaN(current) ? 0 : current;
+    const next = Number((base + delta).toFixed(2));
+    setTxt(String(next));
+    onChange(next);
+  };
+
+  if (!admin) {
+    return (
+      <div>
+        <label className="block text-[11px] text-neutral-500">{label}</label>
+        <div className="font-medium">{value ?? "-"}</div>
+      </div>
+    );
+  }
+
   return (
     <div>
       <label className="block text-[11px] text-neutral-500">{label}</label>
-      {!admin ? (
-        <div className="font-medium">{value ?? "-"}</div>
-      ) : (
-        <div className="flex items-center gap-2">
-          <button className="h-10 w-10 rounded-xl border" onClick={() => onChange(Number((Number(value ?? 0) - step).toFixed(2)))}>-</button>
-          <input type="number" step={step} value={value ?? 0} onChange={(e) => onChange(Number((e.target as HTMLInputElement).value))} className="h-10 px-3 rounded-xl border w-full" />
-          <button className="h-10 w-10 rounded-xl border" onClick={() => onChange(Number((Number(value ?? 0) + step).toFixed(2)))}>+</button>
-        </div>
-      )}
+      <div className="flex items-center gap-2">
+        <button className="h-10 w-10 rounded-xl border" onClick={() => bump(-step)} type="button">-</button>
+        <input
+          type="text"
+          inputMode="decimal"
+          pattern="[0-9]*[.,]?[0-9]*"
+          value={txt}
+          onChange={(e) => updateFromText(e.target.value)}
+          onWheel={(e) => (e.target as HTMLInputElement).blur()}
+          className="h-10 px-3 rounded-xl border w-full"
+        />
+        <button className="h-10 w-10 rounded-xl border" onClick={() => bump(step)} type="button">+</button>
+      </div>
     </div>
   );
 }
