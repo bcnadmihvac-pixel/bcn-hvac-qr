@@ -387,6 +387,129 @@ export default function App() {
                   {showQR ? "Ocultar QR" : "Mostrar QR"}
                 </button>
 
-                {!isKiosk && admin && (
+                {!isKiosk && admin && ({!isKiosk && admin && (
+                  <>
+                    <button
+                      onClick={() => {
+                        if (!draft) return;
+                        const next = items.map((e) =>
+                          e.id === selected.id ? { ...selected, ...draft } : e
+                        );
+                        saveData(next);
+                        setItems(next);
+                        setSelected({ ...selected, ...draft });
+                      }}
+                      className="h-11 px-4 rounded text-white"
+                      style={{ background: "#0ea5e9" }}
+                    >
+                      Guardar cambios
+                    </button>
+
+                    <button
+                      onClick={() =>
+                        setDraft(JSON.parse(JSON.stringify(selected)))
+                      }
+                      className="h-11 px-4 rounded border"
+                    >
+                      Descartar
+                    </button>
+                  </>
+                )}
+
+                {!isKiosk && (
+                  <a
+                    className="h-11 px-4 rounded border grid place-items-center"
+                    href={`?id=${encodeURIComponent(selected.id)}`}
+                  >
+                    Link directo
+                  </a>
+                )}
+              </div>
+
+              {showQR && (
+                <div className="pt-3 grid place-items-center">
+                  <QRCodeCanvas value={makeLink(selected.id)} size={196} includeMargin level="M" />
+                  <div className="text-[11px] text-neutral-500 break-all mt-2">{makeLink(selected.id)}</div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ===================== Auxiliares UI =====================
+function Info({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <span className="block text-[11px] text-neutral-500">{label}</span>
+      <span className="font-medium">{value ?? "-"}</span>
+    </div>
+  );
+}
+
+// Campo numérico editable por teclado y con +/- (live update)
+function FieldNumber({
+  admin,
+  label,
+  value,
+  onChange,
+  step = 1,
+}: {
+  admin: boolean;
+  label: string;
+  value: number | null | undefined;
+  onChange: (v: number) => void;
+  step?: number;
+}) {
+  const [txt, setTxt] = React.useState<string>("");
+
+  React.useEffect(() => {
+    setTxt(value == null ? "" : String(value));
+  }, [value]);
+
+  const updateFromText = (s: string) => {
+    setTxt(s);
+    const nrm = s.replace(",", ".");
+    // Permitimos escribir en vivo: no forzamos número hasta que sea válido
+    if (nrm === "" || nrm === "-" || nrm.endsWith(".")) return;
+    const n = Number(nrm);
+    if (!Number.isNaN(n)) onChange(n);
+  };
+
+  const bump = (d: number) => {
+    const cur = Number(String(txt).replace(",", "."));
+    const base = Number.isNaN(cur) ? 0 : cur;
+    const next = Number((base + d).toFixed(2));
+    setTxt(String(next));
+    onChange(next);
+  };
+
+  if (!admin) {
+    return (
+      <div>
+        <label className="block text-[11px] text-neutral-500">{label}</label>
+        <div className="font-medium">{value ?? "-"}</div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <label className="block text-[11px] text-neutral-500">{label}</label>
+      <div className="flex items-center gap-2">
+        <button className="h-10 w-10 rounded border" onClick={() => bump(-step)} type="button">-</button>
+        <input
+          type="text"
+          inputMode="decimal"
+          pattern="[0-9]*[.,]?[0-9]*"
+          value={txt}
+          onChange={(e) => updateFromText(e.target.value)}
+          onWheel={(e) => (e.target as HTMLInputElement).blur()}
+          className="h-10 px-3 rounded border w-full"
+        />
+        <button className="h-10 w-10 rounded border" onClick={() => bump(step)} type="button">
                   <>
      
