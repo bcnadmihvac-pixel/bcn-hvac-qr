@@ -387,7 +387,7 @@ export default function App() {
                   {showQR ? "Ocultar QR" : "Mostrar QR"}
                 </button>
 
-                {!isKiosk && admin && ({!isKiosk && admin && (
+                {!isKiosk && admin && (
                   <>
                     <button
                       onClick={() => {
